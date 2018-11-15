@@ -32,6 +32,7 @@
           prop="email">
           <el-input v-model="ruleForm.email" />
           <el-button
+            :disabled="disabled"
             size="mini"
             round
             @click="sendMsg">发送验证码</el-button>
@@ -76,10 +77,11 @@
 </template>
 
 <script>
-// import CryptoJS from 'crypto-js'
+import CryptoJS from 'crypto-js'
 export default {
   data() {
     return {
+      disabled: false,
       statusMsg: '',
       error: '',
       ruleForm: {
@@ -137,41 +139,46 @@ export default {
   },
   layout: 'blank',
   methods: {
-    sendMsg: function() {
-      const self = this
+    sendMsg() {
       let namePass
       let emailPass
-      if (self.timerid) {
-        return false
-      }
+      // 对昵称进行检查
       this.$refs['ruleForm'].validateField('name', valid => {
         namePass = valid
       })
-      self.statusMsg = ''
+      // 如果没有昵称则退出
       if (namePass) {
         return false
       }
+      // 对Email进行检查
       this.$refs['ruleForm'].validateField('email', valid => {
         emailPass = valid
       })
+      // 如果有昵称或者Email进行发送请求
       if (!namePass && !emailPass) {
-        self.$axios
+        this.disabled = true
+        this.$axios
           .post('/users/verify', {
-            username: encodeURIComponent(self.ruleForm.name),
-            email: self.ruleForm.email
+            username: encodeURIComponent(this.ruleForm.name),
+            email: this.ruleForm.email
           })
           .then(({ status, data }) => {
             if (status === 200 && data && data.code === 0) {
               let count = 60
-              self.statusMsg = `验证码已发送,剩余${count--}秒`
-              self.timerid = setInterval(function() {
-                self.statusMsg = `验证码已发送,剩余${count--}秒`
+              this.statusMsg = `验证码已发送,剩余${count--}秒`
+              this.timerid = setInterval(() => {
+                this.statusMsg = `验证码已发送,剩余${count--}秒`
                 if (count === 0) {
-                  clearInterval(self.timerid)
+                  clearInterval(this.timerid)
+                  // 计数为0的时候把提示清空，同时解锁按纽
+                  this.statusMsg = ''
+                  this.disabled = false
                 }
               }, 1000)
             } else {
-              self.statusMsg = data.msg
+              // 如果请求错误把请求结果返回给页提示,同时解销按纽
+              this.disabled = false
+              this.statusMsg = data.msg
             }
           })
       }

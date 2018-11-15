@@ -40,10 +40,11 @@
 </template>
 
 <script>
-// import CryptoJS from 'crypto-js'
+import CryptoJS from 'crypto-js'
 export default {
-  data: () => {
+  data() {
     return {
+      name: 'fdsafd',
       checked: '',
       username: '',
       password: '',

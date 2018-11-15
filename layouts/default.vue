@@ -19,6 +19,11 @@ export default {
   components: {
     MyHeader,
     MyFooter
+  },
+  data() {
+    return {
+      name: ''
+    }
   }
 }
 </script>
